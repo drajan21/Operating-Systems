@@ -29,7 +29,6 @@ PROF. NAME: CHRIS MORRIS
 #define POSITION_NOTFOUND          20
 #define POSITION_INTERNALERROR     34
 #define POSITION_NOTIMPLEMENTED    35
-#define POSITION_HTTPVERSION       39
 #define POSITION_SERVER            3
 #define POSITION_DATE              2
 #define POSITION_CONTENTTYPE       4
@@ -40,7 +39,6 @@ PROF. NAME: CHRIS MORRIS
 #define FILENOTFOUND               "FileNotFound.html"
 #define FILEINTERNALERROR          "FileInternalError.html"
 #define FILENOTIMPLEMENTED         "FileNotImplemented.html"
-#define FILEHTTPVERSION            "FileHTTPVersionNotSuuported.html"
 
 
 /* Function to display datetime */
@@ -86,10 +84,6 @@ void sendresponse(int nsockfd,http_response_t http_response,char *fullfilepath)
 	else if(http_response.status.code==HTTP_STATUS_LOOKUP[POSITION_INTERNALERROR].code)
         {
                 file_fd=open(FILEINTERNALERROR,O_RDONLY,S_IRUSR);
-        }
-	else if(http_response.status.code==HTTP_STATUS_LOOKUP[POSITION_HTTPVERSION].code)
-        {
-                file_fd=open(FILEHTTPVERSION,O_RDONLY,S_IRUSR);
         }
 	else
 	{
@@ -282,36 +276,6 @@ int buildresponse(http_request_t *http_request,http_status_t *http_status,http_r
                		if(numread==0)
                 	{
                         	sprintf(writebuf,"501 Error-Not Implemented");
-                        	write(file_fd,writebuf,strlen(writebuf));
-				if(writecheck==-1)
-                                        perror("File Write Error");
-                                else
-                                {
-                        		sprintf(lengthbuffer,"%d",strlen(writebuf));
-                        		strncpy(http_response->headers[POSITION_CONTENTLENGTH].field_value,lengthbuffer,MAX_HEADER_VALUE_LENGTH);
-                        		headerindex++;
-				}
-                	}
-                	else
-                	{
-                        	sprintf(lengthbuffer,"%d",numread);
-                        	strncpy(http_response->headers[POSITION_CONTENTLENGTH].field_value,lengthbuffer,MAX_HEADER_VALUE_LENGTH);
-                        	headerindex++;
-                	}
-		}
-                close(file_fd);
-        }
-	 if(http_status->code==HTTP_STATUS_LOOKUP[POSITION_HTTPVERSION].code)
-        {
-                file_fd=open(FILEHTTPVERSION,O_CREAT|O_RDWR,S_IRUSR|S_IWUSR);
-		if(file_fd==-1)
-                        perror("File Open Error");
-                else
-                {
-                	numread=read(file_fd,readbuf,MEMORYSIZE);
-                	if(numread==0)
-                	{
-                        	sprintf(writebuf,"505 Error-HTTP Version Not Supported");
                         	write(file_fd,writebuf,strlen(writebuf));
 				if(writecheck==-1)
                                         perror("File Write Error");
