@@ -717,7 +717,7 @@ int main(int argc, char * argv[])
            else
            {
                close(newsockfd);
-               while(waitpid(ZOMBIECHILD,0,WNOHANG)!=0);
+               while(waitpid(ZOMBIECHILD,0,WNOHANG) > 0);
            }
         }
     }
