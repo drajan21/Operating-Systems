@@ -63,15 +63,15 @@ int sendcontent(char *path[], int newfp)
     FILE *file; int fd;
     int f_size;
     ssize_t wbytes;
-    char *buffer = malloc(sizeof(char) * SIZE);
-    memset(buffer,0, sizeof(buffer));
+    char *buf = malloc(sizeof(char) * SIZE);
+    memset(buf,0, sizeof(buf));
     if(access(*path,F_OK)==0)
     {
         file = fopen(path[0], "r");
         if (file)
         {
-            while((f_size= fread(buffer,1,sizeof(buffer),file)) > 0)
-            wbytes=write(newfp,buffer,f_size);
+            while((f_size= fread(buf,1,sizeof(buf),file)) > 0)
+            wbytes=write(newfp,buf,f_size);
         }
         else
         {
@@ -82,7 +82,7 @@ int sendcontent(char *path[], int newfp)
     else
         perror(NULL);
    
-    free(buffer);
+    free(buf);
     close(newfp);
     return 0;
 }
@@ -546,7 +546,10 @@ int process_request(char *read_request,char *site,int newsockfd)
 		
 	}
     
-
+   /* buildresponse(&http_request,&http_status,&http_response);
+	sendresponse(newsockfd,http_response,http_request.uri);
+    reset_reponse_headers(&http_response);
+*/
     free(read_header);
 	free(header_name);
 	free(header_value);
@@ -578,7 +581,8 @@ static void * thread_exec(void * arg)
     ssize_t bytes;
     int code;
     memset(readbuffer,0,sizeof(readbuffer));
-    bytes=read(skfd,readbuffer,SIZE);  
+    bytes=read(skfd,readbuffer,SIZE);
+    printf("in thread sock:%d\n",skfd);   
     process_request(readbuffer,directory_name,skfd);
     free((int *)arg);
 }
