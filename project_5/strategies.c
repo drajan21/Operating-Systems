@@ -12,12 +12,22 @@
 #include <unistd.h>
 #include <pthread.h>
 #include "strategies.h"
+#include <signal.h>
 
 #define ZOMBIECHILD -1
 
 char dir_name[MEMORYSIZE];
 int size;
 
+//volatile sig_atomic_t active=1;
+//volatile sig_atomic_t check=1;
+
+/*void handle_sigint_t()
+{
+    activethread=0;
+    activecheck=0;
+}
+*/
 int dispatch_to_serial(int fd, char * directory_name)
 {  
     bytes=read(fd,readbuf,MEMORYSIZE);
@@ -90,11 +100,19 @@ int dispatch_to_thread_pool(int sockfd,char *name, int * thread_num,int *sz)
         s=pthread_create(&tidarr[counter],0,&thread_func,NULL);
     }
 
-    while(1)
+    while(active)
     {
+        check=1;
         newsockfd=accept(sockfd,(struct sockaddr *)NULL,NULL);
-        thread_producer(name,newsockfd,size);
+        if(check)
+            thread_producer(name,newsockfd,size);
     }
+    for(counter=0;counter<no_of_threads;counter++)
+    {
+        printf("Detaching\n");
+        pthread_detach(tidarr[counter]);
+    }
+    return 0;
 }
 
 static void * thread_func()

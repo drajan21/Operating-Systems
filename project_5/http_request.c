@@ -158,29 +158,6 @@ int process_path(char *path, char *site,http_request_t *http_request)
     return 0;
 }
 
-int parserequestheader(char * read_req,http_request_t * http_request,int len)
-{
-    int headercount=0,parseheaderval=0,headerline_length=0;
-    char *read_header;
-   // read_header=(char *)malloc(MEMORYSIZE);
-    read_header[MEMORYSIZE];
-    read_req=read_req+(len+4);
-    /* Saving request headers */
-    while(headercount!=MAX_HEADERS)
-    {
-       if(*(read_req+0)==13 && *(read_req+1)==10)
-           break;
-       sscanf(read_req,"%[^\n]",read_header);
-       headerline_length=strlen(read_header);
-       parseheaderval= preparerequestheader(read_header,headercount,http_request);
-       headercount++;
-       memset(read_header,'0',strlen(read_header));
-       read_req=read_req+headerline_length+1;
-    }
-    http_request->header_count=headercount;
-  //  free(read_header);
-    return 0;
-}
 
 int preparerequestheader(const char *headerline,int headerindex,http_request_t *http_request)
 {

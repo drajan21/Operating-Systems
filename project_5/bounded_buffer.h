@@ -1,7 +1,7 @@
 #ifndef _BOUNDED_BUFFER_H_
 #define _BOUNDED_BUFFER_H_
 
-#define SIZE 16
+#define SZ 16
 #define MEMORYSIZE 1024
 
 struct buff{

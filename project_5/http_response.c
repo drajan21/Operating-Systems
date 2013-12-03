@@ -68,7 +68,7 @@ int buildresponse(http_request_t *http_request,http_status_t *http_status,http_r
     http_response->header_count=headerindex;
     printf("type:%s length:%s\n",http_response->headers[POSITION_CONTENTTYPE].field_value,http_response->headers[POSITION_CONTENTLENGTH].field_value);    
     free(uripath);
-    return;
+    return 0;
 }
 
 /* Function to display datetime */
@@ -204,7 +204,8 @@ int sendcontent(char *path[], int newfp)
     FILE *file; int fd;
     int f_size;
     ssize_t wbytes;
-    char *buffer = malloc(sizeof(char) * SIZE);
+   // char *buffer = malloc(sizeof(char) * SIZE);
+    char buffer[SIZE];
     memset(buffer,0, sizeof(buffer));
     if(access(*path,F_OK)==0)
     {
@@ -223,7 +224,7 @@ int sendcontent(char *path[], int newfp)
     else
         perror(NULL);
    
-    free(buffer);
+//    free(buffer);
 //    close(newfp);
     return 0;
 }
