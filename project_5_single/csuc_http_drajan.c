@@ -139,24 +139,34 @@ int send_stats()
     
     time_diff=difftime(curr_time,server_start_time);
     double processtime_total=get_total_processtime();
-    switch(strategy)
-    {
-        case 's': strcpy(strat,"Serial");
-                  break;
- 
-        case 'f': strcpy(strat,"Fork");
-                  break;
-
-        case 't': strcpy(strat,"Thread");
-                  break;
-
-        case 'w': strcpy(strat,"Thread Pool");
-                  break;
-    }
     logt(level,"Settings:---------------\n");
     logt(level,"Document Root : %s\n",directory_name);
     logt(level,"Port No       : %d\n", portno);
+    switch(strategy)
+    {
+        case 's': //strcpy(strat,"Serial\0");
+		  logt(level,"Strategy      : Serial\n");
+                  break;
+ 
+        case 'f': //strcpy(strat,"Fork\0");
+                  logt(level,"Strategy      : Fork\n");
+                  break;
+
+        case 't': //strcpy(strat,"Thread\0");
+                  logt(level,"Strategy      : Thread\n");
+		  break;
+
+        case 'w': //strcpy(strat,"Thread Pool\0");
+                  logt(level,"Strategy      : Thread Pool\n");
+		  break;
+    }
+   /* logt(level,"Settings:---------------\n");
+    logt(level,"Document Root : %s\n",directory_name);
+    logt(level,"Port No       : %d\n", portno);
+    
     logt(level,"Strategy      : %s\n",strat);
+   // logt(level,"Strategy      : Thread Pool\n");
+    */
     logt(level,"Log Level     : %s\n",level.name);
 
     
@@ -166,6 +176,7 @@ int send_stats()
     logt(level,"Toal Processing Time            : %f secs\n",processtime_total/1000000);
     logt(level,"Average Processing Time         : %f secs\n",(processtime_total/request_count)/1000000);
     logt(level,"Total Amount of Data transfered : %d bytes\n",total_bytes);
+    
     return 0;
 
 }
@@ -200,21 +211,24 @@ int getdatetime(http_response_t *http_response)
     return 0;
 }
 
-int sendcontent(char *path[], int newfp)
+int sendcontent(char *path[], FILE *newfp)
 {
 
-    FILE *file; int fd;
-    int f_size;
-    ssize_t wbytes;
+    FILE *file; 
+    int fd;
+    size_t f_size;
+    size_t wbytes;
     char *buffer = malloc(sizeof(char) * SIZE);
     memset(buffer,0, SIZE);
+    printf("File path: %s\n",path[0]);
     if(access(*path,F_OK)==0)
     {
         file = fopen(path[0], "r");
         if (file)
         {
             while((f_size= fread(buffer,1,SIZE,file)) > 0)
-            wbytes=write(newfp,buffer,f_size);
+           // while((f_size=read(file,
+	    wbytes=fwrite(buffer,1,f_size,newfp);
         }
         else
         {
@@ -255,10 +269,16 @@ char *getfilepath(int status)
             if(!fp)
                 strcpy(pathname,"404.html");
             else
+	    {
                 strcpy(pathname,path400);
+		fclose(fp);
+	    }
         }
         else
+	{
             strcpy(pathname,path404);
+	    fclose(fp);
+	}
     }
 
     free(path404);
@@ -270,6 +290,60 @@ char *getfilepath(int status)
 
 int sendresponse(int nsockfd,http_response_t http_response,char *fpath)
 {
+    FILE *fnsockfd=fdopen(nsockfd,"w");
+        char responseheader[MEMORYSIZE];
+    memset(responseheader,0,sizeof(char)* MEMORYSIZE);
+
+    char responsestatus[MEMORYSIZE];
+        memset(responsestatus,0,sizeof(char) * MEMORYSIZE);
+
+    char *filepath=malloc(sizeof(char) * MEMORYSIZE);
+    memset(filepath,0,sizeof(char) * MEMORYSIZE);
+
+    int file_fd;
+        ssize_t numbytes;
+
+    fprintf(fnsockfd,"HTTP/%d.%d %d %s\r\n",http_response.major_version,http_response.minor_version,http_response.status.code,http_response.status.reason);
+    fprintf(fnsockfd,"%s: %s\r\n%s: %s\r\n%s: %s\r\n%s: %s\r\n\r\n",
+        http_response.headers[POSITION_DATE].field_name,http_response.headers[POSITION_DATE].field_value,
+        http_response.headers[POSITION_SERVER].field_name,http_response.headers[POSITION_SERVER].field_value,
+        http_response.headers[POSITION_CONTENTTYPE].field_name,http_response.headers[POSITION_CONTENTTYPE].field_value,
+        http_response.headers[POSITION_CONTENTLENGTH].field_name,http_response.headers[POSITION_CONTENTLENGTH].field_value);
+
+    if(http_response.status.code!=HTTP_STATUS_LOOKUP[POSITION_OK].code)
+        {
+            filepath=getfilepath(http_response.status.code);
+        }
+
+        else
+        {
+                strcpy(filepath,fpath);;
+        }
+
+   /* numbytes=write(nsockfd,responsestatus,strlen(responsestatus));
+        if(numbytes==ERROR)
+        {
+                logt(level,"Write to Socket Error while sending response\n");
+        //perror("Write to Socket Error");
+        }
+        numbytes=write(nsockfd,responseheader,strlen(responseheader));
+        if(numbytes==ERROR)
+    {
+       logt(level,"Write to Socket Error while sending response\n");
+       // perror("Write to Socket Error");
+    }*/
+
+    sendcontent(&filepath,fnsockfd);
+    fclose(fnsockfd);
+    free(filepath);
+    return 0;
+}
+
+
+
+/*
+int sendresponse(int nsockfd,http_response_t http_response,char *fpath)
+{
 	char responseheader[MEMORYSIZE];
     memset(responseheader,0,sizeof(char)* MEMORYSIZE);
  
@@ -277,6 +351,7 @@ int sendresponse(int nsockfd,http_response_t http_response,char *fpath)
 	memset(responsestatus,0,sizeof(char) * MEMORYSIZE);
 
     char *filepath=malloc(sizeof(char) * MEMORYSIZE);
+    memset(filepath,0,sizeof(char) * MEMORYSIZE);
 
     int file_fd;
 	ssize_t numbytes;
@@ -316,7 +391,7 @@ int sendresponse(int nsockfd,http_response_t http_response,char *fpath)
     free(filepath);
     return 0;
 }
-
+*/
 /*Function to parse path and obtain file type */
 char * parsepath(char *path)
 {
@@ -381,7 +456,8 @@ int checkforerrorfiles(http_status_t *status,http_response_t *http_response)
 {
     FILE *fpcheck;
     int file_fd,writecheck;
-    ssize_t numread;
+    //ssize_t numread;
+    int numread;
     int checkfile=1,length;
     char *filename404=malloc(sizeof(char) * MEMORYSIZE);
     char *filename400=malloc(sizeof(char) * MEMORYSIZE);
@@ -392,7 +468,8 @@ int checkforerrorfiles(http_status_t *status,http_response_t *http_response)
 
     strcpy(filename400,directory_name);
     strcat(filename400,"/400.html");
-
+//    printf("%s\n",filename404);
+//    printf("%s\n",filename400);
     switch(status->code)
     {
         case 404:
@@ -440,7 +517,9 @@ int checkforerrorfiles(http_status_t *status,http_response_t *http_response)
                             //perror("File Write Error");
                         else
                         {
-                            sprintf(lengthbuffer,"%d",strlen(writebuf));
+                            //sprintf(lengthbuffer,"%d",strlen(writebuf));
+			    sprintf(lengthbuffer,"%d",24);
+			    //strcpy(lengthbuffer,strlen(writebuf))
                         }
                     }
                     else
@@ -450,6 +529,8 @@ int checkforerrorfiles(http_status_t *status,http_response_t *http_response)
         }
         strncpy(http_response->headers[POSITION_CONTENTLENGTH].field_value,lengthbuffer,MAX_HEADER_VALUE_LENGTH);
     }
+    free(filename404);
+    free(filename400);
 
     return checkfile;
 }
@@ -644,24 +725,24 @@ int process_request(char *read_request,char *site,int newsockfd)
      http_status_t http_status;
 
 	char *verb;
-    verb=(char *)malloc(MEMORYSIZE);
+    verb=malloc(MEMORYSIZE);
 
     char path[MEMORYSIZE];
     memset(path,0,sizeof(path));
 
     char *version;
-    version=(char *)malloc(MEMORYSIZE);
+    version=malloc(MEMORYSIZE);
 
 	char *header_name,*header_value;
-	header_name=(char *)malloc(MEMORYSIZE);
-	header_value=(char *)malloc(MEMORYSIZE);
+	header_name=malloc(MEMORYSIZE);
+	header_value=malloc(MEMORYSIZE);
 	
 	sscanf(read_request,"%s %s %s",verb,path,version);
 	sscanf(version,"HTTP/%d.%d",&http_request.major_version,&http_request.minor_version);	
     
-    if(strcmp(path,"/favicon.ico")==0)
+  /*  if(strcmp(path,"/favicon.ico")==0)
         return 0;
-    
+    */
 	http_method=parseverb(verb);
 
     process_path(path,site,&http_request);
@@ -669,7 +750,7 @@ int process_request(char *read_request,char *site,int newsockfd)
 
 	int headercount=0,parseheaderval=0,headerline_length=0;
 	char *read_header;
-	read_header=(char *)malloc(MEMORYSIZE);
+	read_header=malloc(MEMORYSIZE);
 
 	read_request=read_request+(strlen(verb)+strlen(path)+strlen(version)+4);
 	/* Saving request headers */
@@ -874,19 +955,28 @@ char getinput(int argc, char *argv[],char * directory_name)
     if(portno==0)
         portno=default_port;
 
+    free(loglevel);
     return strategy;
 }
 
 static void * thread_exec(void * arg) 
-{  
+{ 
+    sigset_t sig_new,sig_old;
+    sigemptyset(&sig_new);
+    sigaddset(&sig_new,SIGINT);
+    sigaddset(&sig_new,SIGTERM);
+    sigaddset(&sig_new,SIGUSR1);
+    pthread_sigmask(SIG_BLOCK,&sig_new,&sig_old);
+ 
     size_t bytes;
     int skfd=*(int *)arg;
     int code;
-    char *readbuf=malloc(MEMORYSIZE);
+   // char *readbuf=malloc(MEMORYSIZE);
+    char readbuf[MEMORYSIZE];
     bytes=read(skfd,readbuf,MEMORYSIZE);
     process_request(readbuf,directory_name,skfd);
    // close(skfd);
-    free(readbuf);
+   // free(readbuf);
     free((int *)arg);
 }
 
@@ -925,7 +1015,7 @@ int dispatch_to_fork(char * read_request,int fd, char * directory_name)
     return 0;
 }
 
-int dispatch_to_thread(char * read_request,int fd, char * name)
+int dispatch_to_thread(int fd, char * name)
 {
     size_t bytes;
    // strcpy(dir_name,name);
@@ -955,7 +1045,7 @@ int dispatch_connection(char * read_request,char strategy,int fd,char * director
         case 'f': dispatch_to_fork(read_request,fd,directory_name);
                   break;
 
-        case 't': dispatch_to_thread(read_request,fd,directory_name);
+        case 't': dispatch_to_thread(fd,directory_name);
                   break;
     }
 
@@ -1010,7 +1100,7 @@ int thread_consumer(char * readbuf,int size,char * dir_name)
             bytes=read(fd,readbuf,MEMORYSIZE);
             process_request(readbuf,dir_name,fd);
        // }
-        close(fd);
+       // close(fd);
     }
 //    perror("out of threads");
     return 0;
@@ -1019,7 +1109,8 @@ int thread_consumer(char * readbuf,int size,char * dir_name)
 
 static void * thread_func()
 {
-    char * readbuf=malloc(MEMORYSIZE);
+    //char * readbuf=malloc(MEMORYSIZE);
+    char readbuf[MEMORYSIZE];
     thread_consumer(readbuf,buffersize,directory_name);
 }
 
@@ -1029,13 +1120,14 @@ int dispatch_to_thread_pool(int sockfd,char *name)
     int no_of_threads=threadno;
     pthread_t tidarr[no_of_threads];
 
-    printf("%d\n",buffersize);
+//    printf("%d\n",buffersize);
     memory_allocate(buffersize);
     
     sigset_t signew,sigold;
     sigemptyset(&signew);
     sigaddset(&signew,SIGINT);
     sigaddset(&signew,SIGTERM);
+    sigaddset(&signew,SIGUSR1);
     pthread_sigmask(SIG_BLOCK,&signew,&sigold);
 
     for(counter=0;counter<no_of_threads;counter++)
@@ -1071,7 +1163,7 @@ int main(int argc, char * argv[])
 	int sockfd;
     int newsockfd;
 	char readbuf[SIZE];
-	char *read_request=malloc(SIZE);
+	char *read_request=malloc(MEMORYSIZE);
     long int port_num=0,default_port=9000;
 
     
@@ -1094,7 +1186,7 @@ int main(int argc, char * argv[])
     printf("%d\n",portno);
     sockfd=startserver(portno);
     time(&server_start_time);
-    printf(ctime(&server_start_time));
+    //printf(ctime(&server_start_time));
     if(strategy=='w')
     {
         //printf("Calling thread pool with %d %d\n",*thread_num,*buf_size);
