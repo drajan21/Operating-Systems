@@ -80,13 +80,10 @@ static pthread_mutex_t mtx_processtime  = PTHREAD_MUTEX_INITIALIZER;
 void handle_signal()
 {
     active=0;
-   // printf("Signal cought\n");
 }
 
 void handle_sigusr1()
 {
-//    check=0;
-    printf("signal raised\n");
     send_stats();
 }
 
@@ -216,7 +213,7 @@ int sendcontent(char *path[], int newfp)
         file = fopen(path[0], "r");
         if (file)
         {
-            while((f_size= fread(buffer,1,sizeof(buffer),file)) > 0)
+            while((f_size= fread(buffer,1,SIZE,file)) > 0)
             wbytes=write(newfp,buffer,f_size);
         }
         else
@@ -316,6 +313,7 @@ int sendresponse(int nsockfd,http_response_t http_response,char *fpath)
 
     sendcontent(&filepath,nsockfd);
     close(nsockfd);
+    free(filepath);
     return 0;
 }
 
@@ -405,10 +403,16 @@ int checkforerrorfiles(http_status_t *status,http_response_t *http_response)
                     if(fpcheck==NULL)
                         checkfile=-1;    
                     else
+                    {
                         length=find_content_length(filename400,status);
+                        fclose(fpcheck);
+                    }
                 }
                 else
+                {
                     length=find_content_length(filename404,status);
+                    fclose(fpcheck);
+                }
                 sprintf(lengthbuffer,"%d",length);
                 strncpy(http_response->headers[POSITION_CONTENTLENGTH].field_value,lengthbuffer,MAX_HEADER_VALUE_LENGTH);
                 break;
@@ -441,6 +445,7 @@ int checkforerrorfiles(http_status_t *status,http_response_t *http_response)
                     }
                     else
                         sprintf(lengthbuffer,"%d",numread);
+                    close(file_fd);
                  }
         }
         strncpy(http_response->headers[POSITION_CONTENTLENGTH].field_value,lengthbuffer,MAX_HEADER_VALUE_LENGTH);
@@ -1043,6 +1048,10 @@ int dispatch_to_thread_pool(int sockfd,char *name)
     {
         //check=1;
         newsockfd=accept(sockfd,(struct sockaddr *)NULL,NULL);
+        if(newsockfd<0)
+        {
+            continue;
+        }
         threadp_requests++;
         if(newsockfd>0)
             thread_producer(directory_name,newsockfd,buffersize);
@@ -1098,6 +1107,10 @@ int main(int argc, char * argv[])
         {
 //        check=1;
             newsockfd=accept(sockfd,(struct sockaddr*)NULL,NULL);
+            if(newsockfd<0)
+            {
+                continue;
+            }
             request_count++;
             if(newsockfd>0)
                 dispatch_connection(read_request,strategy,newsockfd,directory_name);
