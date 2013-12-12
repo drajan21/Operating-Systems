@@ -1,15 +1,23 @@
+/******************************************************************************************************************************************
+
+FILE NAME: bounded_buffer.c
+STUDENT NAME:Diana Rajan
+COURSE: CSCI 640
+PROF. NAME: CHRIS MORRIS
+
+******************************************************************************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
-#include "bounded_buffer.h"
+#include <string.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <pthread.h>
 #include <semaphore.h>
-#include "strategies.h"
+#include <signal.h>
+#include "main_functionality.h" 
 
-typedef struct buff buff_t;
 
-static pthread_mutex_t mtx_buff       = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t cond_buff_full  = PTHREAD_COND_INITIALIZER;
-static pthread_cond_t cond_buff_empty = PTHREAD_COND_INITIALIZER;
 
 
 int memory_allocate(int size)
@@ -37,8 +45,9 @@ int thread_producer(char *name,int fd,int size)
     return 0;
 }
 
-int thread_consumer(int size,char * dir_name)
+int thread_consumer(char * readbuf,int size,char * dir_name)
 {
+    size_t bytes;
     while(active)
     {
         pthread_mutex_lock(&mtx_buff);
@@ -51,14 +60,10 @@ int thread_consumer(int size,char * dir_name)
         pthread_cond_broadcast(&cond_buff_full);
         buff_ptr->remove_position = curr_position;
         pthread_mutex_unlock(&mtx_buff);
-        if(check)
-        {
-            bytes=read(fd,readbuf,MEMORYSIZE);
-            process_request(readbuf,dir_name,fd);
-        }
-        close(fd);
+        bytes=read(fd,readbuf,MEMORYSIZE);
+        process_request(readbuf,dir_name,fd);
     }
-//    perror("out of threads");
     return 0;
 }
+
 

@@ -1,37 +1,24 @@
+/******************************************************************************************************************************************
+
+FILE NAME: http_request.h
+STUDENT NAME:Diana Rajan
+COURSE: CSCI 640
+PROF. NAME: CHRIS MORRIS
+
+******************************************************************************************************************************************/
+
 #ifndef _HTTP_REQUEST_H
 #define _HTTP_REQUEST_H
 
 #include "csuc_http.h"
-
-#define MEMORYSIZE                 1024
-#define INVALID_METHOD             -1
-#define POSITION_OK                2
-#define BACKLOG                    10
-#define POSITION_BADREQUEST        16
-#define POSITION_NOTFOUND          20
-#define POSITION_INTERNALERROR     34
-#define POSITION_NOTIMPLEMENTED    35
-
-char verb[MEMORYSIZE],version[MEMORYSIZE];
-char path[MEMORYSIZE];
-
-
-int check_dir(char * directoryname);
-int check_file(char * filename);
-http_method_t parseverb(char *method);
-int process_path(char *path, char *site,http_request_t *http_request);
-int process_request(char *read_request,char *site,int newsockfd);
-int parserequestheader(char * read_request,http_request_t * http_request,int len);
-int preparerequestheader(const char *headerline,int headerindex,http_request_t *http_request);
-int reset_reponse_headers(http_response_t *http_response);
-
-
+#include <time.h>
 
 const http_status_t HTTP_STATUS_LOOKUP[] = {
     // Informational Status Codes
-    // Request received, continuing process#endif
+    // Request received, continuing process
     {100, "Continue"},
     {101, "Switching Protocols"},
+
     // Success Status Codes
     // The action was successfully received, understood, and accepted
     {200, "OK"},
@@ -41,6 +28,7 @@ const http_status_t HTTP_STATUS_LOOKUP[] = {
     {204, "No Content"},
     {205, "Reset Content"},
     {206, "Partial Content"},
+
     // Redirection Status Codes
     // Further action must be taken in order to complete the request
     {300, "Multiple Choices"},
@@ -50,6 +38,7 @@ const http_status_t HTTP_STATUS_LOOKUP[] = {
     {304, "Not Modified"},
     {305, "Use Proxy"},
     {307, "Temporary Redirect"},
+
     // Client Error Status Codes
     // The request contains bad syntax or cannot be fulfilled
     {400, "Bad Request"},
@@ -70,9 +59,10 @@ const http_status_t HTTP_STATUS_LOOKUP[] = {
     {415, "Unsupported Media Type"},
     {416, "Requested range not satisfiable"},
     {417, "Expectation Failed"},
+
     // Server Error Status Codes
     // The server failed to fulfill an apparently valid request
-    {500, "Internal Server Error"},
+        {500, "Internal Server Error"},
     {501, "Not Implemented"},
     {502, "Bad Gateway"},
     {503, "Service Unavailable"},
@@ -80,4 +70,12 @@ const http_status_t HTTP_STATUS_LOOKUP[] = {
     {505, "HTTP Version not supported"}
 };
 
-#endif
+int preparerequestheader(const char *headerline,int headerindex,http_request_t *http_request);
+http_method_t parseverb(char *method);
+int process_path(char *path, char *site,http_request_t *http_request);
+int reset_reponse_headers(http_response_t *http_response);
+int check_file(char * filename);
+double find_time_diff(struct timeval end, struct timeval start);
+int process_request(char *read_request,char *site,int newsockfd);
+int check_dir(char *directoryname);
+#endif;

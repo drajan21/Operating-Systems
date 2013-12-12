@@ -1,31 +1,80 @@
-#include <stdio.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <stdlib.h>
+/******************************************************************************************************************************************
 
-int logt(int log_level, const char * message,...)
+FILE NAME: logging.c
+STUDENT NAME:Diana Rajan
+COURSE: CSCI 640
+PROF. NAME: CHRIS MORRIS
+
+******************************************************************************************************************************************/
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+#include "main_functionality.h" 
+
+
+int setloglevel(int levnum)
+{
+    memset(level.name,0,sizeof(level.name));
+    switch(levnum)
+    {
+	case 0: strncpy(level.name,"ERROR",5);
+                break;
+        case 1: strncpy(level.name,"WARNING",7);
+                break;
+        case 2: strncpy(level.name,"INFO",4);
+                break;
+        case 3: strncpy(level.name,"DEBUG",5);
+	        break;
+    }
+}
+
+int logt(char * log_level, const char * message,...)
 {
     va_list arg_list;
     int stream;
     FILE *fp;
-    switch(log_level)
+    va_start(arg_list,message);
+    switch(level.num)
     {
-        case 0: fp=stderr;
+        case 0: if(strcmp(log_level,"ERROR")==0)
+		    vfprintf(stderr,message,arg_list);
+		if(strcmp(log_level,"DATA")==0)
+		    vfprintf(stdout,message,arg_list);
                 break;
 
-        case 1: fp=stderr;
+        case 1: if(strcmp(log_level,"ERROR")==0)
+		    vfprintf(stderr,message,arg_list);
+		if(strcmp(log_level,"WARNING")==0)
+		    vfprintf(stderr,message,arg_list);
+		if(strcmp(log_level,"DATA")==0)
+		    vfprintf(stdout,message,arg_list);
                 break;
 
-        case 2: fp=stdout;
+        case 2: if(strcmp(log_level,"ERROR")==0)
+                    vfprintf(stderr,message,arg_list);
+                if(strcmp(log_level,"WARNING")==0)
+                    vfprintf(stderr,message,arg_list);
+		if(strcmp(log_level,"INFO")==0)
+		    vfprintf(stdout,message,arg_list);
+                if(strcmp(log_level,"DATA")==0)
+                    vfprintf(stdout,message,arg_list);
                 break;
 
-        case 3: fp=stdout;
+        case 3: if(strcmp(log_level,"ERROR")==0)
+                    vfprintf(stderr,message,arg_list);
+                if(strcmp(log_level,"WARNING")==0)
+                    vfprintf(stderr,message,arg_list);
+                if(strcmp(log_level,"INFO")==0)
+                    vfprintf(stdout,message,arg_list);
+		if(strcmp(log_level,"DEBUG")==0)
+		    vfprintf(stdout,message,arg_list);
+                if(strcmp(log_level,"DATA")==0)
+                    vfprintf(stdout,message,arg_list);
                 break;
     }
-
-    va_start(arg_list,message);
-    vfprintf(fp,message,arg_list);
     va_end(arg_list);
-
     return 0;
 }
+
+

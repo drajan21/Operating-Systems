@@ -1,25 +1,15 @@
-#ifndef _BOUNDED_BUFFER_H_
-#define _BOUNDED_BUFFER_H_
+/******************************************************************************************************************************************
 
-#define SZ 16
-#define MEMORYSIZE 1024
+FILE NAME: bounded_buffer.h
+STUDENT NAME:Diana Rajan
+COURSE: CSCI 640
+PROF. NAME: CHRIS MORRIS
 
-struct buff{
-        int insert_position;
-        int remove_position;
-        int bounded_buff[];
-       }*buff_ptr;
+******************************************************************************************************************************************/
+#ifndef _BOUNDED_BUFFER_H
+#define _BOUNDED_BUFFER_H
 
-ssize_t bytes;
-char    readbuf[MEMORYSIZE];
-char *  read_request;
-
-
-int insert_buffer(int insert_position,int fd_val);
-int delete_buffer(int delete_poistion);
-int display_buffer();
 int memory_allocate(int size);
 int thread_producer(char *name,int fd,int size);
-int thread_consumer(int size,char * dir_name);
-int displayval(int fd_ptr);
-#endif
+int thread_consumer(char * readbuf,int size,char * dir_name);
+#endif;
