@@ -94,11 +94,13 @@ int send_stats()
    
     logt(lev,"\n\nStatistics-----------------------------------\n");
     logt(lev,"Total Uptime                      : %f secs\n",time_diff);
-    logt(lev,"# of Requests handled             : %d\n",request_count);
-    logt(lev,"Toal Processing Time              : %f secs\n",processtime_total/1000000);
-    logt(lev,"Average Processing Time           : %f secs\n",(processtime_total/request_count)/1000000);
-    logt(lev,"Total Amount of Data transfered   : %d bytes\n",total_bytes);
-    
+    if(strategy!='f')
+    {
+        logt(lev,"# of Requests handled             : %d\n",request_count);
+        logt(lev,"Toal Processing Time              : %f secs\n",processtime_total/1000000);
+        logt(lev,"Average Processing Time           : %f secs\n",(processtime_total/request_count)/1000000);
+        logt(lev,"Total Amount of Data transfered   : %d bytes\n",total_bytes);
+    }
     free(lev);
 
     return 0;
@@ -217,6 +219,9 @@ char getinput(int argc, char *argv[],char * directory_name)
 
     if(portno==0)
         portno=default_port;
+    
+    if(strcmp(directory_name,"")==0)
+        strcpy(directory_name,".");
 
     free(loglevel);
     return strategy;
@@ -343,7 +348,10 @@ int main(int argc, char * argv[])
 	
     free(read_request);
     close(newsockfd);
-    close(sockfd);
+   
+    if( close(sockfd)==-1)
+        logt("WARNING","Socket not closed properly\n");
+
     logt("DEBUG","Graceful Exit\n");
     return(0);
 }
